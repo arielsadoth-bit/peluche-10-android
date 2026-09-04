@@ -828,27 +828,38 @@ private fun EfectoReaccion(reaccion: String, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val ancho = size.width
         val alto = size.height
+        val piel = Color(0xFFFFE4B8)
+        drawOval(
+            color = piel,
+            topLeft = Offset(ancho * 0.425f, alto * 0.565f),
+            size = Size(ancho * 0.15f, alto * 0.115f)
+        )
         if (reaccion == "llorando") {
             for (centroX in listOf(ancho * 0.40f, ancho * 0.60f)) {
                 drawOval(
                     color = Color(0xFF57C7F2).copy(alpha = 0.92f),
-                    topLeft = Offset(centroX - ancho * 0.025f, alto * 0.52f),
-                    size = Size(ancho * 0.05f, alto * 0.15f)
+                    topLeft = Offset(centroX - ancho * 0.020f, alto * 0.53f),
+                    size = Size(ancho * 0.040f, alto * 0.12f)
                 )
-                drawCircle(Color.White.copy(alpha = 0.9f), radius = ancho * 0.010f, center = Offset(centroX - ancho * 0.010f, alto * 0.56f))
+                drawCircle(Color.White.copy(alpha = 0.9f), radius = ancho * 0.008f, center = Offset(centroX - ancho * 0.008f, alto * 0.565f))
             }
-        } else {
-            val grosor = ancho * 0.038f
-            drawLine(Color(0xFF5B1F19), Offset(ancho * 0.31f, alto * 0.40f), Offset(ancho * 0.44f, alto * 0.45f), grosor, StrokeCap.Round)
-            drawLine(Color(0xFF5B1F19), Offset(ancho * 0.69f, alto * 0.40f), Offset(ancho * 0.56f, alto * 0.45f), grosor, StrokeCap.Round)
             drawArc(
-                color = Color(0xFF171717),
+                color = Color(0xFF2A2020), startAngle = 205f, sweepAngle = 130f, useCenter = false,
+                topLeft = Offset(ancho * 0.455f, alto * 0.605f), size = Size(ancho * 0.09f, alto * 0.055f),
+                style = Stroke(width = ancho * 0.016f, cap = StrokeCap.Round)
+            )
+        } else {
+            val grosor = ancho * 0.026f
+            drawLine(Color(0xFF6A2B23), Offset(ancho * 0.345f, alto * 0.425f), Offset(ancho * 0.425f, alto * 0.452f), grosor, StrokeCap.Round)
+            drawLine(Color(0xFF6A2B23), Offset(ancho * 0.655f, alto * 0.425f), Offset(ancho * 0.575f, alto * 0.452f), grosor, StrokeCap.Round)
+            drawArc(
+                color = Color(0xFF2A2020),
                 startAngle = 205f,
                 sweepAngle = 130f,
                 useCenter = false,
-                topLeft = Offset(ancho * 0.43f, alto * 0.60f),
-                size = Size(ancho * 0.14f, alto * 0.08f),
-                style = Stroke(width = ancho * 0.020f, cap = StrokeCap.Round)
+                topLeft = Offset(ancho * 0.455f, alto * 0.605f),
+                size = Size(ancho * 0.09f, alto * 0.055f),
+                style = Stroke(width = ancho * 0.016f, cap = StrokeCap.Round)
             )
         }
     }
