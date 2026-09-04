@@ -656,6 +656,11 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             "enojado" -> R.drawable.sprite_enojado_referencia
             else -> recursoPeluche(equipo)
         }
+        val porteroMostrado = if (balonAtrapado && progresoAtajada >= 0.48f) {
+            R.drawable.sprite_atajada
+        } else {
+            mascota
+        }
         val emocionPorteroX = when (reaccion) {
             "llorando" -> sin(tiempoPortero * 42f) * 4f
             "enojado" -> sin(tiempoPortero * 26f) * 1.5f
@@ -667,7 +672,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             else -> 0f
         }
         Image(
-            painter = painterResource(mascota),
+            painter = painterResource(porteroMostrado),
             contentDescription = "Peluche portero",
             contentScale = ContentScale.Fit,
             modifier = Modifier.size(PORTERO_SIZE.dp).offset(
@@ -679,7 +684,11 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
         val destinoBalonX = porteroX + PORTERO_SIZE * 0.28f
         val balonMostradoX = if (balonAtrapado) balonX + (destinoBalonX - balonX) * progresoAtajada else balonX
         val balonMostradoY = if (balonAtrapado) balonY + (102f - balonY) * progresoAtajada else balonY
-        val tamanoBalon = if (balonAtrapado) SHOT_BALL_SIZE * (1f - 0.28f * progresoAtajada) else SHOT_BALL_SIZE
+        val tamanoBalon = when {
+            balonAtrapado && progresoAtajada >= 0.48f -> 0f
+            balonAtrapado -> SHOT_BALL_SIZE * (1f - 0.28f * progresoAtajada)
+            else -> SHOT_BALL_SIZE
+        }
         Image(
             painter = painterResource(R.drawable.balon_peluche),
             contentDescription = "Balon para tirar",
