@@ -213,10 +213,10 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         for (i in 0..2) gravedad[i] = gravedad[i] * 0.82f + event.values[i] * 0.18f
         val lateral = kotlin.math.hypot(event.values[0] - gravedad[0], event.values[1] - gravedad[1])
         val vertical = kotlin.math.abs(event.values[2] - gravedad[2])
-        if (ahora - ultimoGesto < 900) return
+        if (ahora - ultimoGesto < 2_500) return
         when {
-            vertical > 7.5f -> { gestoTelefono = if (gestoTelefono <= 0) 1 else gestoTelefono + 1; ultimoGesto = ahora }
-            lateral > 8.5f -> { gestoTelefono = if (gestoTelefono >= 0) -1 else gestoTelefono - 1; ultimoGesto = ahora }
+            vertical > 15f -> { gestoTelefono = if (gestoTelefono <= 0) 1 else gestoTelefono + 1; ultimoGesto = ahora }
+            lateral > 16f -> { gestoTelefono = if (gestoTelefono >= 0) -1 else gestoTelefono - 1; ultimoGesto = ahora }
         }
     }
 
@@ -315,7 +315,7 @@ private fun CampoDeJuego(
         if (gestoTelefono == ultimoGestoVisto) return@LaunchedEffect
         ultimoGestoVisto = gestoTelefono
         reaccion = if (gestoTelefono > 0) "llorando" else "enojado"
-        delay(1800)
+        delay(900)
         reaccion = "normal"
     }
 
@@ -478,7 +478,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             reaccion = "enojado"
             mensaje = "Estoy enojado"
         }
-        delay(1800)
+        delay(900)
         reaccion = "normal"
         if (!enVuelo) mensaje = "Listo"
     }
@@ -498,13 +498,13 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
         val puntoPenalX = ((ancho - SHOT_BALL_SIZE) / 2f).coerceIn(0f, limiteX)
         val puntoPenalY = (alto * 0.66f).coerceIn(170f, limiteY)
 
-        fun reiniciar(nuevaReaccion: String = "normal", nuevoMensaje: String = "Listo") {
+        fun reiniciar(nuevoMensaje: String = "Listo") {
             balonX = puntoPenalX
             balonY = puntoPenalY
             velocidadX = 0f
             velocidadY = 0f
             enVuelo = false
-            reaccion = nuevaReaccion
+            reaccion = "normal"
             mensaje = nuevoMensaje
         }
 
@@ -554,7 +554,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                     val entroEnPorteria = balonX in porteriaIzquierda..porteriaDerecha && balonY <= 50f && velocidadY < 0f
                     if (laAtrapó) {
                         atajadas++
-                        reiniciar("normal", "Parada!")
+                        reiniciar("Parada!")
                     } else if (entroEnPorteria) {
                         goles++
                         balonX = if (porteroX < (ancho - PORTERO_SIZE) / 2f) {
@@ -571,9 +571,9 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                         progresoConfeti = 0f
                         celebrandoGol = true
                     } else if (balonX <= 0f || balonX >= limiteX || balonY < -16f) {
-                        reiniciar("enojado", "Fallaste")
+                        reiniciar("Fallaste")
                     } else if (balonY >= limiteY) {
-                        reiniciar("llorando", "Casi")
+                        reiniciar("Casi")
                     }
                 }
             }
@@ -650,7 +650,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                                 velocidadY = (impulsoY * 2.8f).coerceIn(-860f, -300f)
                                 enVuelo = true
                             } else {
-                                reiniciar("enojado", "Tiro muy corto")
+                                reiniciar("Tiro muy corto")
                             }
                         }
                     ) { change, dragAmount ->
