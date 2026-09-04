@@ -508,6 +508,23 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             mensaje = nuevoMensaje
         }
 
+        fun anotarGol() {
+            goles++
+            balonX = if (porteroX < (ancho - PORTERO_SIZE) / 2f) {
+                porteriaDerecha - SHOT_BALL_SIZE - 14f
+            } else {
+                porteriaIzquierda + 14f
+            }
+            balonY = 106f
+            velocidadX = 0f
+            velocidadY = 0f
+            enVuelo = false
+            reaccion = "normal"
+            mensaje = "GOOOOL!"
+            progresoConfeti = 0f
+            celebrandoGol = true
+        }
+
         LaunchedEffect(celebrandoGol) {
             if (!celebrandoGol) return@LaunchedEffect
             val inicio = withFrameNanos { it }
@@ -556,20 +573,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                         atajadas++
                         reiniciar("Parada!")
                     } else if (entroEnPorteria) {
-                        goles++
-                        balonX = if (porteroX < (ancho - PORTERO_SIZE) / 2f) {
-                            porteriaDerecha - SHOT_BALL_SIZE - 14f
-                        } else {
-                            porteriaIzquierda + 14f
-                        }
-                        balonY = 106f
-                        velocidadX = 0f
-                        velocidadY = 0f
-                        enVuelo = false
-                        reaccion = "normal"
-                        mensaje = "GOOOOL!"
-                        progresoConfeti = 0f
-                        celebrandoGol = true
+                        anotarGol()
                     } else if (balonX <= 0f || balonX >= limiteX || balonY < -16f) {
                         reiniciar("Fallaste")
                     } else if (balonY >= limiteY) {
@@ -645,7 +649,11 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                         onDragEnd = {
                             val impulsoX = balonX - inicioX
                             val impulsoY = balonY - inicioY
-                            if (impulsoY < -10f) {
+                            val centroBalonX = balonX + SHOT_BALL_SIZE / 2f
+                            val dentroDePorteria = centroBalonX in (porteriaIzquierda + 8f)..(porteriaDerecha - 8f) && balonY <= 174f
+                            if (dentroDePorteria) {
+                                anotarGol()
+                            } else if (impulsoY < -10f) {
                                 velocidadX = (impulsoX * 2.7f).coerceIn(-500f, 500f)
                                 velocidadY = (impulsoY * 2.8f).coerceIn(-860f, -300f)
                                 enVuelo = true
