@@ -61,6 +61,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.math.abs
 import kotlin.math.hypot
@@ -192,8 +193,10 @@ private fun CampoDeJuego(
     var reaccion by remember { mutableStateOf("normal") }
 
     LaunchedEffect(gestoTelefono) {
-        if (gestoTelefono > 0) reaccion = "llorando"
-        if (gestoTelefono < 0) reaccion = "enojado"
+        if (gestoTelefono == 0) return@LaunchedEffect
+        reaccion = if (gestoTelefono > 0) "llorando" else "enojado"
+        delay(1800)
+        reaccion = "normal"
     }
 
     BoxWithConstraints(
@@ -221,13 +224,19 @@ private fun CampoDeJuego(
                     if (jugando) {
                         balonX += balonVx * delta
                         balonY += balonVy * delta
-                        if (balonX <= 0f || balonX >= limiteBalonX) {
-                            balonX = balonX.coerceIn(0f, limiteBalonX)
-                            balonVx *= -1f
+                        if (balonX <= 0f) {
+                            balonX = 0f
+                            balonVx = abs(balonVx).coerceAtLeast(135f)
+                        } else if (balonX >= limiteBalonX) {
+                            balonX = limiteBalonX
+                            balonVx = -abs(balonVx).coerceAtLeast(135f)
                         }
-                        if (balonY <= 0f || balonY >= limiteBalonY) {
-                            balonY = balonY.coerceIn(0f, limiteBalonY)
-                            balonVy *= -1f
+                        if (balonY <= 0f) {
+                            balonY = 0f
+                            balonVy = abs(balonVy).coerceAtLeast(120f)
+                        } else if (balonY >= limiteBalonY) {
+                            balonY = limiteBalonY
+                            balonVy = -abs(balonVy).coerceAtLeast(120f)
                         }
 
                         val objetivoX = balonX - (PELUCHE_SIZE - BALL_SIZE) / 2f
@@ -303,7 +312,10 @@ private fun CampoDeJuego(
                 contentDescription = "Balon que rebota",
                 modifier = Modifier.size(BALL_SIZE.dp).offset(x = balonX.dp, y = balonY.dp)
                     .pointerInput(density) {
-                        detectDragGestures { change, dragAmount ->
+                        detectDragGestures(onDragEnd = {
+                            if (abs(balonVx) < 80f) balonVx = if (balonVx < 0f) -150f else 150f
+                            if (abs(balonVy) < 80f) balonVy = if (balonVy < 0f) -130f else 130f
+                        }) { change, dragAmount ->
                             change.consume()
                             balonX = (balonX + dragAmount.x / density.density).coerceIn(0f, limiteBalonX)
                             balonY = (balonY + dragAmount.y / density.density).coerceIn(0f, limiteBalonY)
@@ -331,17 +343,22 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
     var reaccion by remember { mutableStateOf("normal") }
     var mensaje by remember { mutableStateOf("Listo") }
     var porteroX by remember { mutableFloatStateOf(0f) }
+    var tiempoPortero by remember { mutableFloatStateOf(0f) }
     var numeroTiro by remember { mutableIntStateOf(0) }
     var errorPortero by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(gestoTelefono) {
+        if (gestoTelefono == 0) return@LaunchedEffect
         if (gestoTelefono > 0) {
             reaccion = "llorando"
             mensaje = "No me sacudas"
-        } else if (gestoTelefono < 0) {
+        } else {
             reaccion = "enojado"
             mensaje = "Estoy enojado"
         }
+        delay(1800)
+        reaccion = "normal"
+        if (!enVuelo) mensaje = "Listo"
     }
 
     BoxWithConstraints(
@@ -376,7 +393,14 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
                     if (anterior == 0L) anterior = ahora
                     val delta = min(0.035f, (ahora - anterior) / 1_000_000_000f)
                     anterior = ahora
-                    if (!enVuelo) return@withFrameNanos
+                    tiempoPortero += delta
+                    if (!enVuelo) {
+                        val centroPorteria = (limitePorteroIzq + limitePorteroDer) / 2f
+                        val recorrido = (limitePorteroDer - limitePorteroIzq) / 2f
+                        porteroX = (centroPorteria + sin(tiempoPortero * 2.1f) * recorrido)
+                            .coerceIn(limitePorteroIzq, limitePorteroDer)
+                        return@withFrameNanos
+                    }
 
                     val objetivoPortero = (balonX + BALL_SIZE / 2f - PORTERO_SIZE / 2f + errorPortero)
                         .coerceIn(limitePorteroIzq, limitePorteroDer)
@@ -471,9 +495,9 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
                         onDragEnd = {
                             val impulsoX = balonX - inicioX
                             val impulsoY = balonY - inicioY
-                            if (impulsoY < -16f) {
-                                velocidadX = (impulsoX * 3.5f).coerceIn(-460f, 460f)
-                                velocidadY = (impulsoY * 3.5f).coerceIn(-900f, -360f)
+                            if (impulsoY < -10f) {
+                                velocidadX = (impulsoX * 2.7f).coerceIn(-500f, 500f)
+                                velocidadY = (impulsoY * 2.8f).coerceIn(-860f, -300f)
                                 enVuelo = true
                             } else {
                                 reiniciar("enojado", "Tiro muy corto")
