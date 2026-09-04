@@ -254,9 +254,14 @@ private fun CampoDeJuego(
                         if (hypot(centroBalonX - centroPelucheX, centroBalonY - centroPelucheY) < 105f) {
                             val golpeX = centroBalonX - centroPelucheX
                             val golpeY = centroBalonY - centroPelucheY
-                            val largo = max(1f, hypot(golpeX, golpeY))
-                            balonVx = golpeX / largo * 200f
-                            balonVy = golpeY / largo * 200f
+                            val largo = hypot(golpeX, golpeY)
+                            if (largo < 8f) {
+                                balonVx = if (sin(tiempo * 4f) >= 0f) 210f else -210f
+                                balonVy = -180f
+                            } else {
+                                balonVx = golpeX / largo * 200f
+                                balonVy = golpeY / largo * 200f
+                            }
                         }
 
                         if (mostrarPorteria && balonX > limiteBalonX - 30f && balonY < 116f) {
@@ -346,6 +351,8 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
     var tiempoPortero by remember { mutableFloatStateOf(0f) }
     var numeroTiro by remember { mutableIntStateOf(0) }
     var errorPortero by remember { mutableFloatStateOf(0f) }
+    var celebrandoGol by remember { mutableStateOf(false) }
+    var progresoConfeti by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(gestoTelefono) {
         if (gestoTelefono == 0) return@LaunchedEffect
@@ -386,6 +393,21 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
             mensaje = nuevoMensaje
         }
 
+        LaunchedEffect(celebrandoGol) {
+            if (!celebrandoGol) return@LaunchedEffect
+            val inicio = withFrameNanos { it }
+            while (isActive && progresoConfeti < 1f) {
+                withFrameNanos { ahora ->
+                    progresoConfeti = ((ahora - inicio) / 1_600_000_000f).coerceIn(0f, 1f)
+                }
+            }
+            if (isActive) {
+                celebrandoGol = false
+                progresoConfeti = 0f
+                reiniciar()
+            }
+        }
+
         LaunchedEffect(ancho, alto) {
             var anterior = 0L
             while (isActive) {
@@ -394,6 +416,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
                     val delta = min(0.035f, (ahora - anterior) / 1_000_000_000f)
                     anterior = ahora
                     tiempoPortero += delta
+                    if (celebrandoGol) return@withFrameNanos
                     if (!enVuelo) {
                         val centroPorteria = (limitePorteroIzq + limitePorteroDer) / 2f
                         val recorrido = (limitePorteroDer - limitePorteroIzq) / 2f
@@ -419,7 +442,15 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
                         reiniciar("normal", "Parada!")
                     } else if (entroEnPorteria) {
                         goles++
-                        reiniciar("normal", "Gol!")
+                        balonX = balonX.coerceIn(porteriaIzquierda + 8f, porteriaDerecha - BALL_SIZE - 8f)
+                        balonY = 92f
+                        velocidadX = 0f
+                        velocidadY = 0f
+                        enVuelo = false
+                        reaccion = "normal"
+                        mensaje = "GOOOOL!"
+                        progresoConfeti = 0f
+                        celebrandoGol = true
                     } else if (balonX <= 0f || balonX >= limiteX || balonY < -16f) {
                         reiniciar("enojado", "Fallaste")
                     } else if (balonY >= limiteY) {
@@ -510,6 +541,25 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
                     }
                 }
         )
+
+        if (celebrandoGol) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                val colores = listOf(Color(0xFFFFD43B), Color(0xFFE74C3C), Color(0xFF2F8FE6), Color(0xFF6CC26B))
+                repeat(36) { indice ->
+                    val x = 18f + (indice * 47f) % (size.width - 36f)
+                    val inicioY = 72f + (indice % 6) * 17f
+                    val y = inicioY + progresoConfeti * (130f + (indice % 5) * 33f)
+                    drawRect(colores[indice % colores.size], topLeft = Offset(x, y), size = androidx.compose.ui.geometry.Size(10f, 16f))
+                }
+            }
+            Text(
+                "GOOOOL!",
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 104.dp),
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFFD43B)
+            )
+        }
     }
 }
 
