@@ -12,6 +12,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -51,7 +55,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -73,6 +79,59 @@ private const val PELUCHE_SIZE = 190f
 private const val BALL_SIZE = 66f
 private const val SHOT_BALL_SIZE = 44f
 private const val PORTERO_SIZE = 94f
+
+private data class EquipoMundial(val nombre: String, val principal: Color, val detalle: Color)
+
+private val seleccionesMundial2026 = listOf(
+    EquipoMundial("Mexico", Color(0xFF08783B), Color.White),
+    EquipoMundial("Canada", Color(0xFFD62828), Color.White),
+    EquipoMundial("Estados Unidos", Color(0xFF1E4D9B), Color.White),
+    EquipoMundial("Argentina", Color(0xFF71C7EC), Color.White),
+    EquipoMundial("Brasil", Color(0xFFFFD21F), Color(0xFF17833B)),
+    EquipoMundial("Colombia", Color(0xFFFFD226), Color(0xFF244A9A)),
+    EquipoMundial("Ecuador", Color(0xFFFFD329), Color(0xFF263B87)),
+    EquipoMundial("Paraguay", Color(0xFFD62828), Color.White),
+    EquipoMundial("Uruguay", Color(0xFF63BEEB), Color.White),
+    EquipoMundial("Australia", Color(0xFFFFC400), Color(0xFF16754A)),
+    EquipoMundial("Iran", Color.White, Color(0xFF149143)),
+    EquipoMundial("Japon", Color(0xFF1C3D87), Color(0xFFD62C2C)),
+    EquipoMundial("Jordania", Color.White, Color(0xFFB5222A)),
+    EquipoMundial("Corea del Sur", Color(0xFFE63946), Color(0xFF1C4E9A)),
+    EquipoMundial("Qatar", Color(0xFF7A1733), Color.White),
+    EquipoMundial("Arabia Saudi", Color(0xFF087B3B), Color.White),
+    EquipoMundial("Uzbekistan", Color(0xFF1687C4), Color.White),
+    EquipoMundial("Irak", Color.White, Color(0xFF16934A)),
+    EquipoMundial("Argelia", Color.White, Color(0xFF168C46)),
+    EquipoMundial("Cabo Verde", Color(0xFF174E9B), Color(0xFFE72F38)),
+    EquipoMundial("Costa de Marfil", Color(0xFFF28C28), Color.White),
+    EquipoMundial("Egipto", Color(0xFFE33636), Color.White),
+    EquipoMundial("Ghana", Color.White, Color(0xFF16884C)),
+    EquipoMundial("Marruecos", Color(0xFFD42D2D), Color(0xFF177A46)),
+    EquipoMundial("Senegal", Color.White, Color(0xFF168E4C)),
+    EquipoMundial("Sudafrica", Color(0xFFF4C51D), Color(0xFF198547)),
+    EquipoMundial("Tunez", Color.White, Color(0xFFD72E2E)),
+    EquipoMundial("RD Congo", Color(0xFF1681C5), Color(0xFFE1B92B)),
+    EquipoMundial("Curazao", Color(0xFF1B5EA6), Color(0xFFF2C51D)),
+    EquipoMundial("Haiti", Color(0xFF1A4E9A), Color(0xFFE43737)),
+    EquipoMundial("Panama", Color.White, Color(0xFFD62C35)),
+    EquipoMundial("Nueva Zelanda", Color.Black, Color.White),
+    EquipoMundial("Austria", Color.White, Color(0xFFD72E35)),
+    EquipoMundial("Belgica", Color(0xFFD92B2B), Color(0xFFF3C41D)),
+    EquipoMundial("Bosnia y Herzegovina", Color(0xFF1E5BA8), Color.White),
+    EquipoMundial("Croacia", Color.White, Color(0xFFD42A36)),
+    EquipoMundial("Chequia", Color(0xFFD32F35), Color.White),
+    EquipoMundial("Inglaterra", Color.White, Color(0xFF1D4E9B)),
+    EquipoMundial("Francia", Color(0xFF1A3D89), Color(0xFFE33640)),
+    EquipoMundial("Alemania", Color.White, Color.Black),
+    EquipoMundial("Paises Bajos", Color(0xFFF47B2A), Color.Black),
+    EquipoMundial("Noruega", Color(0xFFD72833), Color.White),
+    EquipoMundial("Portugal", Color(0xFFCF2937), Color(0xFF167B43)),
+    EquipoMundial("Escocia", Color(0xFF1B4E98), Color.White),
+    EquipoMundial("Espana", Color(0xFFE13232), Color(0xFFF4C61F)),
+    EquipoMundial("Suecia", Color(0xFFF4C61F), Color(0xFF1D5B9E)),
+    EquipoMundial("Suiza", Color(0xFFD72E35), Color.White),
+    EquipoMundial("Turquia", Color(0xFFD62D35), Color.White)
+)
 
 class MainActivity : ComponentActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
@@ -119,6 +178,7 @@ private fun Peluche10App(gestoTelefono: Int) {
     var jugando by remember { mutableStateOf(true) }
     var pausado by remember { mutableStateOf(false) }
     var saltando by remember { mutableStateOf(false) }
+    var equipo by remember { mutableStateOf(seleccionesMundial2026.first()) }
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFFF5FAFF)) {
@@ -146,6 +206,7 @@ private fun Peluche10App(gestoTelefono: Int) {
                         saltando = saltando,
                         mostrarPorteria = false,
                         gestoTelefono = gestoTelefono,
+                        equipo = equipo,
                         alTerminarSalto = { saltando = false },
                         alAnotar = {}
                     )
@@ -160,9 +221,13 @@ private fun Peluche10App(gestoTelefono: Int) {
                         ControlButton(if (pausado) "Seguir" else "Pausa", if (pausado) Icons.Default.PlayArrow else Icons.Default.Pause, pausado) { pausado = !pausado }
                     }
                 } else if (seccion == 1) {
-                    CampoTiros(modifier = Modifier.weight(1f), gestoTelefono = gestoTelefono)
+                    CampoTiros(modifier = Modifier.weight(1f), gestoTelefono = gestoTelefono, equipo = equipo)
                 } else {
-                    VestimentaPreview(modifier = Modifier.weight(1f))
+                    VestimentaPreview(
+                        modifier = Modifier.weight(1f),
+                        equipo = equipo,
+                        alSeleccionar = { equipo = it }
+                    )
                 }
             }
         }
@@ -177,6 +242,7 @@ private fun CampoDeJuego(
     saltando: Boolean,
     mostrarPorteria: Boolean,
     gestoTelefono: Int,
+    equipo: EquipoMundial,
     alTerminarSalto: () -> Unit,
     alAnotar: () -> Unit
 ) {
@@ -306,6 +372,10 @@ private fun CampoDeJuego(
             contentScale = ContentScale.Fit,
             modifier = Modifier.size(PELUCHE_SIZE.dp).offset(x = pelucheX.dp, y = (pelucheY + salto + balanceo).dp)
         )
+        CamisetaPeluche(
+            equipo = equipo,
+            modifier = Modifier.size(PELUCHE_SIZE.dp).offset(x = pelucheX.dp, y = (pelucheY + salto + balanceo).dp)
+        )
 
         if (jugando) {
             Image(
@@ -330,7 +400,7 @@ private fun CampoDeJuego(
 }
 
 @Composable
-private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
+private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMundial) {
     val density = LocalDensity.current
     var balonX by remember { mutableFloatStateOf(140f) }
     var balonY by remember { mutableFloatStateOf(450f) }
@@ -505,6 +575,10 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
             contentScale = ContentScale.Fit,
             modifier = Modifier.size(PORTERO_SIZE.dp).offset(x = porteroX.dp, y = 66.dp)
         )
+        CamisetaPeluche(
+            equipo = equipo,
+            modifier = Modifier.size(PORTERO_SIZE.dp).offset(x = porteroX.dp, y = 66.dp)
+        )
 
         Image(
             painter = painterResource(R.drawable.balon_peluche),
@@ -635,6 +709,80 @@ private fun MuestraUniforme(color: Color, nombre: String) {
             drawCircle(color, radius = size.minDimension / 2f - 5f)
         }
         Text(nombre, style = MaterialTheme.typography.labelSmall, color = Color.White)
+    }
+}
+
+@Composable
+private fun VestimentaPreview(
+    modifier: Modifier,
+    equipo: EquipoMundial,
+    alSeleccionar: (EquipoMundial) -> Unit
+) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)
+            .background(Color(0xFFDCF1FF), RoundedCornerShape(8.dp))
+    ) {
+        Box(modifier = Modifier.fillMaxWidth().height(265.dp)) {
+            FondoEstadio(Modifier.matchParentSize())
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Uniformes Mundial 2026", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(equipo.nombre, style = MaterialTheme.typography.labelLarge, color = Color.White)
+            }
+            Image(
+                painter = painterResource(R.drawable.peluche_sin_circulo),
+                contentDescription = "Peluche con uniforme de ${equipo.nombre}",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(210.dp).align(Alignment.Center)
+            )
+            CamisetaPeluche(equipo, Modifier.size(210.dp).align(Alignment.Center))
+        }
+        Text(
+            "Elige una seleccion",
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = Color(0xFF173F62)
+        )
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(7.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp),
+            contentPadding = PaddingValues(bottom = 12.dp)
+        ) {
+            items(seleccionesMundial2026, key = { it.nombre }) { seleccion ->
+                Button(
+                    onClick = { alSeleccionar(seleccion) },
+                    modifier = Modifier.fillMaxWidth().height(58.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(3.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (seleccion == equipo) seleccion.principal else Color.White,
+                        contentColor = if (seleccion == equipo) Color.White else Color(0xFF163E61)
+                    )
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Canvas(modifier = Modifier.size(18.dp)) {
+                            drawCircle(seleccion.principal, radius = size.minDimension / 2f)
+                            drawCircle(seleccion.detalle, radius = size.minDimension / 2f - 4f)
+                        }
+                        Text(seleccion.nombre, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CamisetaPeluche(equipo: EquipoMundial, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val ancho = size.width
+        val alto = size.height
+        val pecho = Offset(ancho * 0.25f, alto * 0.60f)
+        val medida = Size(ancho * 0.50f, alto * 0.23f)
+        drawRoundRect(equipo.principal, pecho, medida, CornerRadius(ancho * 0.12f, ancho * 0.12f))
+        drawRect(equipo.detalle, Offset(ancho * 0.28f, alto * 0.69f), Size(ancho * 0.44f, alto * 0.035f))
+        drawCircle(equipo.detalle, radius = ancho * 0.045f, center = Offset(ancho * 0.50f, alto * 0.66f))
     }
 }
 
