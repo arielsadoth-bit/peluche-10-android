@@ -70,7 +70,7 @@ import kotlin.math.min
 import kotlin.math.sin
 
 private const val PELUCHE_SIZE = 190f
-private const val BALL_SIZE = 66f
+private const val BALL_SIZE = 44f
 private const val PORTERO_SIZE = 94f
 
 class MainActivity : ComponentActivity(), SensorEventListener {
@@ -442,8 +442,12 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
                         reiniciar("normal", "Parada!")
                     } else if (entroEnPorteria) {
                         goles++
-                        balonX = balonX.coerceIn(porteriaIzquierda + 8f, porteriaDerecha - BALL_SIZE - 8f)
-                        balonY = 92f
+                        balonX = if (porteroX < (ancho - PORTERO_SIZE) / 2f) {
+                            porteriaDerecha - BALL_SIZE - 14f
+                        } else {
+                            porteriaIzquierda + 14f
+                        }
+                        balonY = 106f
                         velocidadX = 0f
                         velocidadY = 0f
                         enVuelo = false
@@ -554,7 +558,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
             }
             Text(
                 "GOOOOL!",
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 104.dp),
+                modifier = Modifier.align(Alignment.Center),
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFFFD43B)
