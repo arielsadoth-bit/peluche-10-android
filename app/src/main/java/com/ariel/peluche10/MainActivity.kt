@@ -319,7 +319,7 @@ private fun CampoDeJuego(
 @Composable
 private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
     val density = LocalDensity.current
-    var balonX by remember { mutableFloatStateOf(42f) }
+    var balonX by remember { mutableFloatStateOf(140f) }
     var balonY by remember { mutableFloatStateOf(450f) }
     var velocidadX by remember { mutableFloatStateOf(0f) }
     var velocidadY by remember { mutableFloatStateOf(0f) }
@@ -356,10 +356,12 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
         val porteriaDerecha = max(porteriaIzquierda, ancho - 24f)
         val limitePorteroIzq = porteriaIzquierda + 2f
         val limitePorteroDer = max(limitePorteroIzq, porteriaDerecha - PORTERO_SIZE - 2f)
+        val puntoPenalX = ((ancho - BALL_SIZE) / 2f).coerceIn(0f, limiteX)
+        val puntoPenalY = (alto * 0.66f).coerceIn(170f, limiteY)
 
         fun reiniciar(nuevaReaccion: String = "normal", nuevoMensaje: String = "Listo") {
-            balonX = 42f.coerceAtMost(limiteX)
-            balonY = max(170f, alto - BALL_SIZE - 74f)
+            balonX = puntoPenalX
+            balonY = puntoPenalY
             velocidadX = 0f
             velocidadY = 0f
             enVuelo = false
@@ -404,6 +406,17 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
         }
 
         FondoEstadio(Modifier.matchParentSize())
+
+        Canvas(modifier = Modifier.matchParentSize()) {
+            drawCircle(
+                color = Color.White.copy(alpha = 0.9f),
+                radius = 7.dp.toPx(),
+                center = Offset(
+                    (puntoPenalX + BALL_SIZE / 2f) * density.density,
+                    (puntoPenalY + BALL_SIZE / 2f) * density.density
+                )
+            )
+        }
 
         LaunchedEffect(ancho) {
             reiniciar()
