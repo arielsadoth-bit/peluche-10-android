@@ -59,6 +59,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
@@ -783,11 +784,35 @@ private fun CamisetaPeluche(equipo: EquipoMundial, modifier: Modifier = Modifier
     Canvas(modifier = modifier) {
         val ancho = size.width
         val alto = size.height
-        val pecho = Offset(ancho * 0.25f, alto * 0.60f)
-        val medida = Size(ancho * 0.50f, alto * 0.23f)
-        drawRoundRect(equipo.principal, pecho, medida, CornerRadius(ancho * 0.12f, ancho * 0.12f))
-        drawRect(equipo.detalle, Offset(ancho * 0.28f, alto * 0.69f), Size(ancho * 0.44f, alto * 0.035f))
-        drawCircle(equipo.detalle, radius = ancho * 0.045f, center = Offset(ancho * 0.50f, alto * 0.66f))
+        val camiseta = Path().apply {
+            moveTo(ancho * 0.34f, alto * 0.74f)
+            lineTo(ancho * 0.66f, alto * 0.74f)
+            lineTo(ancho * 0.73f, alto * 0.89f)
+            lineTo(ancho * 0.67f, alto * 0.93f)
+            lineTo(ancho * 0.33f, alto * 0.93f)
+            lineTo(ancho * 0.27f, alto * 0.89f)
+            close()
+        }
+        drawPath(camiseta, color = equipo.principal)
+        drawPath(camiseta, color = Color(0xFF102233), style = Stroke(width = ancho * 0.012f))
+        drawLine(
+            color = equipo.detalle,
+            start = Offset(ancho * 0.31f, alto * 0.82f),
+            end = Offset(ancho * 0.69f, alto * 0.82f),
+            strokeWidth = ancho * 0.036f
+        )
+        val escudo = Path().apply {
+            moveTo(ancho * 0.39f, alto * 0.77f)
+            lineTo(ancho * 0.43f, alto * 0.75f)
+            lineTo(ancho * 0.47f, alto * 0.77f)
+            lineTo(ancho * 0.46f, alto * 0.81f)
+            lineTo(ancho * 0.43f, alto * 0.83f)
+            lineTo(ancho * 0.40f, alto * 0.81f)
+            close()
+        }
+        drawPath(escudo, color = Color.White)
+        drawPath(escudo, color = equipo.detalle, style = Stroke(width = ancho * 0.012f))
+        drawCircle(equipo.principal, radius = ancho * 0.010f, center = Offset(ancho * 0.43f, alto * 0.79f))
     }
 }
 
