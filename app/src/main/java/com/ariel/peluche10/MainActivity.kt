@@ -70,7 +70,8 @@ import kotlin.math.min
 import kotlin.math.sin
 
 private const val PELUCHE_SIZE = 190f
-private const val BALL_SIZE = 44f
+private const val BALL_SIZE = 66f
+private const val SHOT_BALL_SIZE = 44f
 private const val PORTERO_SIZE = 94f
 
 class MainActivity : ComponentActivity(), SensorEventListener {
@@ -212,16 +213,20 @@ private fun CampoDeJuego(
         val limiteBalonY = max(0f, alto - BALL_SIZE)
 
         LaunchedEffect(jugando, pausado, ancho, alto) {
-            var anterior = 0L
             while (isActive) {
-                withFrameNanos { ahora ->
-                    if (anterior == 0L) anterior = ahora
-                    val delta = min(0.035f, (ahora - anterior) / 1_000_000_000f)
-                    anterior = ahora
-                    if (pausado || ancho <= PELUCHE_SIZE || alto <= PELUCHE_SIZE) return@withFrameNanos
+                delay(16)
+                val delta = 0.016f
+                if (!pausado && ancho > PELUCHE_SIZE && alto > PELUCHE_SIZE) {
                     tiempo += delta
 
                     if (jugando) {
+                        // Nunca dejes la pelota detenida tras un arrastre o choque.
+                        if (abs(balonVx) < 90f) {
+                            balonVx = if (balonX < limiteBalonX / 2f) 160f else -160f
+                        }
+                        if (abs(balonVy) < 80f) {
+                            balonVy = if (balonY < limiteBalonY / 2f) 135f else -135f
+                        }
                         balonX += balonVx * delta
                         balonY += balonVy * delta
                         if (balonX <= 0f) {
@@ -255,7 +260,19 @@ private fun CampoDeJuego(
                             val golpeX = centroBalonX - centroPelucheX
                             val golpeY = centroBalonY - centroPelucheY
                             val largo = hypot(golpeX, golpeY)
-                            if (largo < 8f) {
+                            if (balonX <= 2f) {
+                                balonVx = 220f
+                                balonVy = if (balonY < limiteBalonY / 2f) 165f else -165f
+                            } else if (balonX >= limiteBalonX - 2f) {
+                                balonVx = -220f
+                                balonVy = if (balonY < limiteBalonY / 2f) 165f else -165f
+                            } else if (balonY <= 2f) {
+                                balonVx = if (balonX < limiteBalonX / 2f) 220f else -220f
+                                balonVy = 180f
+                            } else if (balonY >= limiteBalonY - 2f) {
+                                balonVx = if (balonX < limiteBalonX / 2f) 220f else -220f
+                                balonVy = -180f
+                            } else if (largo < 8f) {
                                 balonVx = if (sin(tiempo * 4f) >= 0f) 210f else -210f
                                 balonVy = -180f
                             } else {
@@ -374,13 +391,13 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
     ) {
         val ancho = maxWidth.value
         val alto = maxHeight.value
-        val limiteX = max(0f, ancho - BALL_SIZE)
-        val limiteY = max(0f, alto - BALL_SIZE)
+        val limiteX = max(0f, ancho - SHOT_BALL_SIZE)
+        val limiteY = max(0f, alto - SHOT_BALL_SIZE)
         val porteriaIzquierda = 24f
         val porteriaDerecha = max(porteriaIzquierda, ancho - 24f)
         val limitePorteroIzq = porteriaIzquierda + 2f
         val limitePorteroDer = max(limitePorteroIzq, porteriaDerecha - PORTERO_SIZE - 2f)
-        val puntoPenalX = ((ancho - BALL_SIZE) / 2f).coerceIn(0f, limiteX)
+        val puntoPenalX = ((ancho - SHOT_BALL_SIZE) / 2f).coerceIn(0f, limiteX)
         val puntoPenalY = (alto * 0.66f).coerceIn(170f, limiteY)
 
         fun reiniciar(nuevaReaccion: String = "normal", nuevoMensaje: String = "Listo") {
@@ -425,7 +442,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
                         return@withFrameNanos
                     }
 
-                    val objetivoPortero = (balonX + BALL_SIZE / 2f - PORTERO_SIZE / 2f + errorPortero)
+                    val objetivoPortero = (balonX + SHOT_BALL_SIZE / 2f - PORTERO_SIZE / 2f + errorPortero)
                         .coerceIn(limitePorteroIzq, limitePorteroDer)
                     porteroX += (objetivoPortero - porteroX).coerceIn(-180f * delta, 180f * delta)
 
@@ -433,7 +450,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
                     balonY += velocidadY * delta
                     velocidadY += 225f * delta
 
-                    val centroBalonX = balonX + BALL_SIZE / 2f
+                    val centroBalonX = balonX + SHOT_BALL_SIZE / 2f
                     val centroPorteroX = porteroX + PORTERO_SIZE / 2f
                     val laAtrapó = balonY in 42f..175f && abs(centroBalonX - centroPorteroX) < 53f
                     val entroEnPorteria = balonX in porteriaIzquierda..porteriaDerecha && balonY <= 50f && velocidadY < 0f
@@ -443,7 +460,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
                     } else if (entroEnPorteria) {
                         goles++
                         balonX = if (porteroX < (ancho - PORTERO_SIZE) / 2f) {
-                            porteriaDerecha - BALL_SIZE - 14f
+                            porteriaDerecha - SHOT_BALL_SIZE - 14f
                         } else {
                             porteriaIzquierda + 14f
                         }
@@ -471,8 +488,8 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
                 color = Color.White.copy(alpha = 0.9f),
                 radius = 7.dp.toPx(),
                 center = Offset(
-                    (puntoPenalX + BALL_SIZE / 2f) * density.density,
-                    (puntoPenalY + BALL_SIZE / 2f) * density.density
+                    (puntoPenalX + SHOT_BALL_SIZE / 2f) * density.density,
+                    (puntoPenalY + SHOT_BALL_SIZE / 2f) * density.density
                 )
             )
         }
@@ -511,7 +528,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
         Image(
             painter = painterResource(R.drawable.balon_peluche),
             contentDescription = "Balon para tirar",
-            modifier = Modifier.size(BALL_SIZE.dp).offset(x = balonX.dp, y = balonY.dp)
+            modifier = Modifier.size(SHOT_BALL_SIZE.dp).offset(x = balonX.dp, y = balonY.dp)
                 .pointerInput(density, ancho, alto) {
                     detectDragGestures(
                         onDragStart = {
