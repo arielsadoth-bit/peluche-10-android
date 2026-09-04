@@ -723,7 +723,12 @@ private fun VestimentaPreview(
             .background(Color(0xFFDCF1FF), RoundedCornerShape(8.dp))
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(265.dp)) {
-            FondoEstadio(Modifier.matchParentSize())
+            Image(
+                painter = painterResource(R.drawable.fondo_vestidor),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize()
+            )
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Uniformes Mundial 2026", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
                 Text(equipo.nombre, style = MaterialTheme.typography.labelLarge, color = Color.White)
