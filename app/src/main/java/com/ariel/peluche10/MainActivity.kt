@@ -835,43 +835,26 @@ private fun FondoEstadio(modifier: Modifier = Modifier) {
 @Composable
 private fun EfectoReaccion(reaccion: String, modifier: Modifier = Modifier) {
     if (reaccion == "normal") return
-    Canvas(modifier = modifier) {
-        val ancho = size.width
-        val alto = size.height
-        val piel = Color(0xFFFFE4B8)
-        drawOval(
-            color = piel,
-            topLeft = Offset(ancho * 0.425f, alto * 0.565f),
-            size = Size(ancho * 0.15f, alto * 0.115f)
-        )
-        if (reaccion == "llorando") {
-            for (centroX in listOf(ancho * 0.40f, ancho * 0.60f)) {
-                drawOval(
-                    color = Color(0xFF57C7F2).copy(alpha = 0.92f),
-                    topLeft = Offset(centroX - ancho * 0.020f, alto * 0.53f),
-                    size = Size(ancho * 0.040f, alto * 0.12f)
-                )
-                drawCircle(Color.White.copy(alpha = 0.9f), radius = ancho * 0.008f, center = Offset(centroX - ancho * 0.008f, alto * 0.565f))
-            }
-            drawArc(
-                color = Color(0xFF2A2020), startAngle = 205f, sweepAngle = 130f, useCenter = false,
-                topLeft = Offset(ancho * 0.455f, alto * 0.605f), size = Size(ancho * 0.09f, alto * 0.055f),
-                style = Stroke(width = ancho * 0.016f, cap = StrokeCap.Round)
-            )
-        } else {
-            val grosor = ancho * 0.026f
-            drawLine(Color(0xFF6A2B23), Offset(ancho * 0.345f, alto * 0.425f), Offset(ancho * 0.425f, alto * 0.452f), grosor, StrokeCap.Round)
-            drawLine(Color(0xFF6A2B23), Offset(ancho * 0.655f, alto * 0.425f), Offset(ancho * 0.575f, alto * 0.452f), grosor, StrokeCap.Round)
-            drawArc(
-                color = Color(0xFF2A2020),
-                startAngle = 205f,
-                sweepAngle = 130f,
-                useCenter = false,
-                topLeft = Offset(ancho * 0.455f, alto * 0.605f),
-                size = Size(ancho * 0.09f, alto * 0.055f),
-                style = Stroke(width = ancho * 0.016f, cap = StrokeCap.Round)
+    val sprite = if (reaccion == "llorando") {
+        R.drawable.sprite_llorando_overlay
+    } else {
+        R.drawable.sprite_enojado_overlay
+    }
+    Box(modifier = modifier) {
+        // Oculta la sonrisa base antes de aplicar la boca triste del sprite.
+        Canvas(modifier = Modifier.matchParentSize()) {
+            drawOval(
+                color = Color(0xFFFFE4B8),
+                topLeft = Offset(size.width * 0.425f, size.height * 0.565f),
+                size = Size(size.width * 0.15f, size.height * 0.115f)
             )
         }
+        Image(
+            painter = painterResource(sprite),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.matchParentSize()
+        )
     }
 }
 
