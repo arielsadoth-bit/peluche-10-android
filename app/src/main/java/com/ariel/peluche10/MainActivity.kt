@@ -467,6 +467,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
     var celebrandoGol by remember { mutableStateOf(false) }
     var progresoConfeti by remember { mutableFloatStateOf(0f) }
     var balonAtrapado by remember { mutableStateOf(false) }
+    var progresoAtajada by remember { mutableFloatStateOf(0f) }
     var ultimoGestoVisto by remember { mutableIntStateOf(gestoTelefono) }
 
     LaunchedEffect(gestoTelefono) {
@@ -506,6 +507,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             velocidadY = 0f
             enVuelo = false
             balonAtrapado = false
+            progresoAtajada = 0f
             reaccion = "normal"
             mensaje = nuevoMensaje
         }
@@ -522,6 +524,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             velocidadY = 0f
             enVuelo = false
             balonAtrapado = false
+            progresoAtajada = 0f
             reaccion = "normal"
             mensaje = "GOOOOL!"
             progresoConfeti = 0f
@@ -545,7 +548,13 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
 
         LaunchedEffect(balonAtrapado) {
             if (!balonAtrapado) return@LaunchedEffect
-            delay(950)
+            val inicio = withFrameNanos { it }
+            while (isActive && progresoAtajada < 1f) {
+                withFrameNanos { ahora ->
+                    progresoAtajada = ((ahora - inicio) / 260_000_000f).coerceIn(0f, 1f)
+                }
+            }
+            delay(650)
             if (balonAtrapado) reiniciar()
         }
 
@@ -557,7 +566,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                     val delta = min(0.035f, (ahora - anterior) / 1_000_000_000f)
                     anterior = ahora
                     tiempoPortero += delta
-                    if (celebrandoGol) return@withFrameNanos
+                    if (celebrandoGol || balonAtrapado) return@withFrameNanos
                     if (!enVuelo) {
                         val centroPorteria = (limitePorteroIzq + limitePorteroDer) / 2f
                         val recorrido = (limitePorteroDer - limitePorteroIzq) / 2f
@@ -581,6 +590,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                     if (laAtrapó) {
                         atajadas++
                         balonAtrapado = true
+                        progresoAtajada = 0f
                         velocidadX = 0f
                         velocidadY = 0f
                         enVuelo = false
@@ -640,12 +650,16 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             modifier = Modifier.size(PORTERO_SIZE.dp).offset(x = porteroX.dp, y = 66.dp)
         )
 
+        val destinoBalonX = porteroX + PORTERO_SIZE * 0.28f
+        val balonMostradoX = if (balonAtrapado) balonX + (destinoBalonX - balonX) * progresoAtajada else balonX
+        val balonMostradoY = if (balonAtrapado) balonY + (102f - balonY) * progresoAtajada else balonY
+        val tamanoBalon = if (balonAtrapado) SHOT_BALL_SIZE * (1f - 0.28f * progresoAtajada) else SHOT_BALL_SIZE
         Image(
             painter = painterResource(R.drawable.balon_peluche),
             contentDescription = "Balon para tirar",
-            modifier = Modifier.size(SHOT_BALL_SIZE.dp).offset(
-                x = (if (balonAtrapado) porteroX + PORTERO_SIZE * 0.28f else balonX).dp,
-                y = (if (balonAtrapado) 104f else balonY).dp
+            modifier = Modifier.size(tamanoBalon.dp).offset(
+                x = balonMostradoX.dp,
+                y = balonMostradoY.dp
             )
                 .pointerInput(density, ancho, alto) {
                     detectDragGestures(
@@ -796,16 +810,20 @@ private fun VestimentaPreview(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.matchParentSize()
             )
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Uniformes Mundial 2026", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(equipo.nombre, style = MaterialTheme.typography.labelLarge, color = Color.White)
-            }
             Image(
                 painter = painterResource(recursoPeluche(equipo)),
                 contentDescription = "Peluche con uniforme de ${equipo.nombre}",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(210.dp).align(Alignment.Center)
             )
+            Column(
+                modifier = Modifier.padding(12.dp)
+                    .background(Color(0xB8143555), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 8.dp, vertical = 5.dp)
+            ) {
+                Text("Uniformes Mundial 2026", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(equipo.nombre, style = MaterialTheme.typography.labelLarge, color = Color.White)
+            }
         }
         Text(
             "Elige una seleccion",
