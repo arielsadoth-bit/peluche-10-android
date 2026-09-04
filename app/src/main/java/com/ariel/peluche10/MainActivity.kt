@@ -422,20 +422,20 @@ private fun CampoDeJuego(
 
         if (mostrarPorteria) Porteria(modifier = Modifier.align(Alignment.TopEnd).padding(top = 16.dp, end = 12.dp))
 
-        val mascota = when (reaccion) {
-            "llorando" -> R.drawable.sprite_llorando_realista
-            "enojado" -> R.drawable.sprite_enojado_referencia
-            else -> recursoPeluche(equipo)
-        }
-        Image(
-            painter = painterResource(mascota),
-            contentDescription = "Peluche 10 caminando",
-            contentScale = ContentScale.Fit,
+        Box(
             modifier = Modifier.size(PELUCHE_SIZE.dp).offset(
                 x = (pelucheX + emocionX).dp,
                 y = (pelucheY + salto + balanceo + emocionY).dp
             )
-        )
+        ) {
+            Image(
+                painter = painterResource(recursoPeluche(equipo)),
+                contentDescription = "Peluche 10 caminando",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.matchParentSize()
+            )
+            EfectoReaccion(reaccion, Modifier.matchParentSize())
+        }
 
         if (jugando) {
             Image(
@@ -479,6 +479,11 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
     var errorPortero by remember { mutableFloatStateOf(0f) }
     var celebrandoGol by remember { mutableStateOf(false) }
     var progresoConfeti by remember { mutableFloatStateOf(0f) }
+    var animandoGol by remember { mutableStateOf(false) }
+    var progresoGol by remember { mutableFloatStateOf(0f) }
+    var golInicioX by remember { mutableFloatStateOf(0f) }
+    var golInicioY by remember { mutableFloatStateOf(0f) }
+    var golDestinoX by remember { mutableFloatStateOf(0f) }
     var balonAtrapado by remember { mutableStateOf(false) }
     var progresoAtajada by remember { mutableFloatStateOf(0f) }
     var ultimoGestoVisto by remember { mutableIntStateOf(gestoTelefono) }
@@ -527,11 +532,14 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
 
         fun anotarGol() {
             goles++
-            balonX = if (porteroX < (ancho - PORTERO_SIZE) / 2f) {
+            golInicioX = balonX
+            golInicioY = balonY
+            golDestinoX = if (porteroX < (ancho - PORTERO_SIZE) / 2f) {
                 porteriaDerecha - SHOT_BALL_SIZE - 14f
             } else {
                 porteriaIzquierda + 14f
             }
+            balonX = golDestinoX
             balonY = 106f
             velocidadX = 0f
             velocidadY = 0f
@@ -541,7 +549,22 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             reaccion = "normal"
             mensaje = "GOOOOL!"
             progresoConfeti = 0f
-            celebrandoGol = true
+            progresoGol = 0f
+            animandoGol = true
+        }
+
+        LaunchedEffect(animandoGol) {
+            if (!animandoGol) return@LaunchedEffect
+            val inicio = withFrameNanos { it }
+            while (isActive && progresoGol < 1f) {
+                withFrameNanos { ahora ->
+                    progresoGol = ((ahora - inicio) / 420_000_000f).coerceIn(0f, 1f)
+                }
+            }
+            if (isActive) {
+                animandoGol = false
+                celebrandoGol = true
+            }
         }
 
         LaunchedEffect(celebrandoGol) {
@@ -579,7 +602,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                     val delta = min(0.035f, (ahora - anterior) / 1_000_000_000f)
                     anterior = ahora
                     tiempoPortero += delta
-                    if (celebrandoGol || balonAtrapado) return@withFrameNanos
+                    if (celebrandoGol || animandoGol || balonAtrapado) return@withFrameNanos
                     if (!enVuelo) {
                         val centroPorteria = (limitePorteroIzq + limitePorteroDer) / 2f
                         val recorrido = (limitePorteroDer - limitePorteroIzq) / 2f
@@ -651,15 +674,10 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                 .align(Alignment.TopCenter).padding(top = 52.dp, start = 20.dp, end = 20.dp)
         )
 
-        val mascota = when (reaccion) {
-            "llorando" -> R.drawable.sprite_llorando_realista
-            "enojado" -> R.drawable.sprite_enojado_referencia
-            else -> recursoPeluche(equipo)
-        }
         val porteroMostrado = if (balonAtrapado && progresoAtajada >= 0.48f) {
             R.drawable.sprite_atajada
         } else {
-            mascota
+            recursoPeluche(equipo)
         }
         val emocionPorteroX = when (reaccion) {
             "llorando" -> sin(tiempoPortero * 42f) * 4f
@@ -671,22 +689,37 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             "enojado" -> abs(sin(tiempoPortero * 15f)) * 6f
             else -> 0f
         }
-        Image(
-            painter = painterResource(porteroMostrado),
-            contentDescription = "Peluche portero",
-            contentScale = ContentScale.Fit,
+        Box(
             modifier = Modifier.size(PORTERO_SIZE.dp).offset(
                 x = (porteroX + emocionPorteroX).dp,
                 y = (66f + emocionPorteroY).dp
             )
-        )
+        ) {
+            Image(
+                painter = painterResource(porteroMostrado),
+                contentDescription = "Peluche portero",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.matchParentSize()
+            )
+            if (!balonAtrapado) EfectoReaccion(reaccion, Modifier.matchParentSize())
+        }
 
         val destinoBalonX = porteroX + PORTERO_SIZE * 0.28f
-        val balonMostradoX = if (balonAtrapado) balonX + (destinoBalonX - balonX) * progresoAtajada else balonX
-        val balonMostradoY = if (balonAtrapado) balonY + (102f - balonY) * progresoAtajada else balonY
+        val progresoGolSuave = progresoGol * progresoGol * (3f - 2f * progresoGol)
+        val balonMostradoX = when {
+            animandoGol -> golInicioX + (golDestinoX - golInicioX) * progresoGolSuave
+            balonAtrapado -> balonX + (destinoBalonX - balonX) * progresoAtajada
+            else -> balonX
+        }
+        val balonMostradoY = when {
+            animandoGol -> golInicioY + (106f - golInicioY) * progresoGolSuave
+            balonAtrapado -> balonY + (102f - balonY) * progresoAtajada
+            else -> balonY
+        }
         val tamanoBalon = when {
             balonAtrapado && progresoAtajada >= 0.48f -> 0f
             balonAtrapado -> SHOT_BALL_SIZE * (1f - 0.28f * progresoAtajada)
+            animandoGol -> SHOT_BALL_SIZE * (1f + 0.12f * progresoGolSuave)
             else -> SHOT_BALL_SIZE
         }
         Image(
@@ -786,6 +819,38 @@ private fun FondoEstadio(modifier: Modifier = Modifier) {
             }
         }
         drawLine(Color.White.copy(alpha = 0.7f), Offset(0f, inicioCampo), Offset(size.width, inicioCampo), 2f)
+    }
+}
+
+@Composable
+private fun EfectoReaccion(reaccion: String, modifier: Modifier = Modifier) {
+    if (reaccion == "normal") return
+    Canvas(modifier = modifier) {
+        val ancho = size.width
+        val alto = size.height
+        if (reaccion == "llorando") {
+            for (centroX in listOf(ancho * 0.40f, ancho * 0.60f)) {
+                drawOval(
+                    color = Color(0xFF57C7F2).copy(alpha = 0.92f),
+                    topLeft = Offset(centroX - ancho * 0.025f, alto * 0.52f),
+                    size = Size(ancho * 0.05f, alto * 0.15f)
+                )
+                drawCircle(Color.White.copy(alpha = 0.9f), radius = ancho * 0.010f, center = Offset(centroX - ancho * 0.010f, alto * 0.56f))
+            }
+        } else {
+            val grosor = ancho * 0.038f
+            drawLine(Color(0xFF5B1F19), Offset(ancho * 0.31f, alto * 0.40f), Offset(ancho * 0.44f, alto * 0.45f), grosor, StrokeCap.Round)
+            drawLine(Color(0xFF5B1F19), Offset(ancho * 0.69f, alto * 0.40f), Offset(ancho * 0.56f, alto * 0.45f), grosor, StrokeCap.Round)
+            drawArc(
+                color = Color(0xFF171717),
+                startAngle = 205f,
+                sweepAngle = 130f,
+                useCenter = false,
+                topLeft = Offset(ancho * 0.43f, alto * 0.60f),
+                size = Size(ancho * 0.14f, alto * 0.08f),
+                style = Stroke(width = ancho * 0.020f, cap = StrokeCap.Round)
+            )
+        }
     }
 }
 
