@@ -534,13 +534,10 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             goles++
             golInicioX = balonX
             golInicioY = balonY
-            golDestinoX = if (porteroX < (ancho - PORTERO_SIZE) / 2f) {
-                porteriaDerecha - SHOT_BALL_SIZE - 14f
-            } else {
-                porteriaIzquierda + 14f
-            }
+            // El balon entra por el mismo lado al que el jugador lo dirigio.
+            golDestinoX = balonX.coerceIn(porteriaIzquierda + 10f, porteriaDerecha - SHOT_BALL_SIZE - 10f)
             balonX = golDestinoX
-            balonY = 106f
+            balonY = golInicioY
             velocidadX = 0f
             velocidadY = 0f
             enVuelo = false
@@ -603,17 +600,12 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                     anterior = ahora
                     tiempoPortero += delta
                     if (celebrandoGol || animandoGol || balonAtrapado) return@withFrameNanos
-                    if (!enVuelo) {
-                        val centroPorteria = (limitePorteroIzq + limitePorteroDer) / 2f
-                        val recorrido = (limitePorteroDer - limitePorteroIzq) / 2f
-                        porteroX = (centroPorteria + sin(tiempoPortero * 2.1f) * recorrido)
-                            .coerceIn(limitePorteroIzq, limitePorteroDer)
-                        return@withFrameNanos
-                    }
-
-                    val objetivoPortero = (balonX + SHOT_BALL_SIZE / 2f - PORTERO_SIZE / 2f + errorPortero)
+                    // Se mueve por la porteria sin seguir la trayectoria del balon.
+                    val centroPorteria = (limitePorteroIzq + limitePorteroDer) / 2f
+                    val recorrido = (limitePorteroDer - limitePorteroIzq) / 2f
+                    porteroX = (centroPorteria + sin(tiempoPortero * 2.1f) * recorrido)
                         .coerceIn(limitePorteroIzq, limitePorteroDer)
-                    porteroX += (objetivoPortero - porteroX).coerceIn(-180f * delta, 180f * delta)
+                    if (!enVuelo) return@withFrameNanos
 
                     balonX += velocidadX * delta
                     balonY += velocidadY * delta
@@ -621,9 +613,21 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
 
                     val centroBalonX = balonX + SHOT_BALL_SIZE / 2f
                     val centroPorteroX = porteroX + PORTERO_SIZE / 2f
-                    val laAtrapó = balonY in 42f..175f && abs(centroBalonX - centroPorteroX) < 53f
-                    val entroEnPorteria = balonX in porteriaIzquierda..porteriaDerecha && balonY <= 50f && velocidadY < 0f
-                    if (laAtrapó) {
+                    val dentroDelArco = centroBalonX in (porteriaIzquierda + 10f)..(porteriaDerecha - 10f)
+                    val golpeaPosteIzquierdo = balonY in 54f..184f && balonX <= porteriaIzquierda
+                    val golpeaPosteDerecho = balonY in 54f..184f && balonX >= porteriaDerecha - SHOT_BALL_SIZE
+                    val golpeaTravesano = dentroDelArco && balonY <= 54f && velocidadY < 0f
+                    val laAtrapó = balonY in 68f..175f && abs(centroBalonX - centroPorteroX) < 48f
+                    val entroEnPorteria = dentroDelArco && balonY <= 92f && velocidadY < 0f
+                    if (golpeaPosteIzquierdo || golpeaPosteDerecho) {
+                        balonX = if (golpeaPosteIzquierdo) porteriaIzquierda else porteriaDerecha - SHOT_BALL_SIZE
+                        velocidadX = -velocidadX * 0.78f
+                        mensaje = "Reboto en el poste"
+                    } else if (golpeaTravesano) {
+                        balonY = 54f
+                        velocidadY = abs(velocidadY) * 0.72f
+                        mensaje = "Reboto en el travesano"
+                    } else if (laAtrapó) {
                         atajadas++
                         balonAtrapado = true
                         progresoAtajada = 0f
@@ -677,7 +681,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
         val porteroMostrado = if (balonAtrapado && progresoAtajada >= 0.48f) {
             R.drawable.sprite_atajada
         } else {
-            recursoPeluche(equipo)
+            R.drawable.peluche_sin_circulo
         }
         val emocionPorteroX = when (reaccion) {
             "llorando" -> sin(tiempoPortero * 42f) * 4f
@@ -747,13 +751,10 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                         onDragEnd = {
                             val impulsoX = balonX - inicioX
                             val impulsoY = balonY - inicioY
-                            val centroBalonX = balonX + SHOT_BALL_SIZE / 2f
-                            val dentroDePorteria = centroBalonX in (porteriaIzquierda + 8f)..(porteriaDerecha - 8f) && balonY <= 174f
-                            if (dentroDePorteria) {
-                                anotarGol()
-                            } else if (impulsoY < -10f) {
-                                velocidadX = (impulsoX * 2.7f).coerceIn(-500f, 500f)
-                                velocidadY = (impulsoY * 2.8f).coerceIn(-860f, -300f)
+                            if (impulsoY < -10f) {
+                                // Sale desde donde lo soltaste y conserva esa direccion.
+                                velocidadX = (impulsoX * 3.8f).coerceIn(-760f, 760f)
+                                velocidadY = (impulsoY * 4.1f).coerceIn(-1_180f, -340f)
                                 enVuelo = true
                             } else {
                                 reiniciar("Tiro muy corto")
