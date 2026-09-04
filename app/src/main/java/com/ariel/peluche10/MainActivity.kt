@@ -244,41 +244,18 @@ private fun CampoDeJuego(
                             balonVy = -abs(balonVy).coerceAtLeast(120f)
                         }
 
-                        val objetivoX = balonX - (PELUCHE_SIZE - BALL_SIZE) / 2f
-                        val objetivoY = balonY - (PELUCHE_SIZE - BALL_SIZE) / 2f
-                        val dx = objetivoX - pelucheX
-                        val dy = objetivoY - pelucheY
-                        val distancia = max(1f, hypot(dx, dy))
-                        pelucheX = (pelucheX + dx / distancia * 116f * delta).coerceIn(0f, limiteX)
-                        pelucheY = (pelucheY + dy / distancia * 116f * delta).coerceIn(0f, limiteY)
-
                         val centroPelucheX = pelucheX + PELUCHE_SIZE / 2f
                         val centroPelucheY = pelucheY + PELUCHE_SIZE / 2f
                         val centroBalonX = balonX + BALL_SIZE / 2f
                         val centroBalonY = balonY + BALL_SIZE / 2f
-                        if (hypot(centroBalonX - centroPelucheX, centroBalonY - centroPelucheY) < 105f) {
-                            val golpeX = centroBalonX - centroPelucheX
-                            val golpeY = centroBalonY - centroPelucheY
-                            val largo = hypot(golpeX, golpeY)
-                            if (balonX <= 2f) {
-                                balonVx = 220f
-                                balonVy = if (balonY < limiteBalonY / 2f) 165f else -165f
-                            } else if (balonX >= limiteBalonX - 2f) {
-                                balonVx = -220f
-                                balonVy = if (balonY < limiteBalonY / 2f) 165f else -165f
-                            } else if (balonY <= 2f) {
-                                balonVx = if (balonX < limiteBalonX / 2f) 220f else -220f
-                                balonVy = 180f
-                            } else if (balonY >= limiteBalonY - 2f) {
-                                balonVx = if (balonX < limiteBalonX / 2f) 220f else -220f
-                                balonVy = -180f
-                            } else if (largo < 8f) {
-                                balonVx = if (sin(tiempo * 4f) >= 0f) 210f else -210f
-                                balonVy = -180f
-                            } else {
-                                balonVx = golpeX / largo * 200f
-                                balonVy = golpeY / largo * 200f
-                            }
+                        val dx = centroBalonX - centroPelucheX
+                        val dy = centroBalonY - centroPelucheY
+                        val distancia = max(1f, hypot(dx, dy))
+                        val distanciaSegura = 112f
+                        if (distancia > distanciaSegura) {
+                            val avance = min(116f * delta, distancia - distanciaSegura)
+                            pelucheX = (pelucheX + dx / distancia * avance).coerceIn(0f, limiteX)
+                            pelucheY = (pelucheY + dy / distancia * avance).coerceIn(0f, limiteY)
                         }
 
                         if (mostrarPorteria && balonX > limiteBalonX - 30f && balonY < 116f) {
