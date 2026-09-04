@@ -409,6 +409,16 @@ private fun CampoDeJuego(
             -58f * (1f - abs(2f * progreso - 1f))
         } else 0f
         val balanceo = if (pausado) 0f else sin(tiempo * 7f) * 3f
+        val emocionX = when (reaccion) {
+            "llorando" -> sin(tiempo * 42f) * 5f
+            "enojado" -> sin(tiempo * 26f) * 1.5f
+            else -> 0f
+        }
+        val emocionY = when (reaccion) {
+            "llorando" -> abs(sin(tiempo * 20f)) * 2f
+            "enojado" -> abs(sin(tiempo * 15f)) * 6f
+            else -> 0f
+        }
 
         if (mostrarPorteria) Porteria(modifier = Modifier.align(Alignment.TopEnd).padding(top = 16.dp, end = 12.dp))
 
@@ -421,7 +431,10 @@ private fun CampoDeJuego(
             painter = painterResource(mascota),
             contentDescription = "Peluche 10 caminando",
             contentScale = ContentScale.Fit,
-            modifier = Modifier.size(PELUCHE_SIZE.dp).offset(x = pelucheX.dp, y = (pelucheY + salto + balanceo).dp)
+            modifier = Modifier.size(PELUCHE_SIZE.dp).offset(
+                x = (pelucheX + emocionX).dp,
+                y = (pelucheY + salto + balanceo + emocionY).dp
+            )
         )
 
         if (jugando) {
@@ -643,11 +656,24 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             "enojado" -> R.drawable.sprite_enojado_referencia
             else -> recursoPeluche(equipo)
         }
+        val emocionPorteroX = when (reaccion) {
+            "llorando" -> sin(tiempoPortero * 42f) * 4f
+            "enojado" -> sin(tiempoPortero * 26f) * 1.5f
+            else -> 0f
+        }
+        val emocionPorteroY = when (reaccion) {
+            "llorando" -> abs(sin(tiempoPortero * 20f)) * 2f
+            "enojado" -> abs(sin(tiempoPortero * 15f)) * 6f
+            else -> 0f
+        }
         Image(
             painter = painterResource(mascota),
             contentDescription = "Peluche portero",
             contentScale = ContentScale.Fit,
-            modifier = Modifier.size(PORTERO_SIZE.dp).offset(x = porteroX.dp, y = 66.dp)
+            modifier = Modifier.size(PORTERO_SIZE.dp).offset(
+                x = (porteroX + emocionPorteroX).dp,
+                y = (66f + emocionPorteroY).dp
+            )
         )
 
         val destinoBalonX = porteroX + PORTERO_SIZE * 0.28f
