@@ -192,9 +192,11 @@ private fun CampoDeJuego(
     var tiempo by remember { mutableFloatStateOf(0f) }
     var inicioSalto by remember { mutableFloatStateOf(-10f) }
     var reaccion by remember { mutableStateOf("normal") }
+    var ultimoGestoVisto by remember { mutableIntStateOf(gestoTelefono) }
 
     LaunchedEffect(gestoTelefono) {
-        if (gestoTelefono == 0) return@LaunchedEffect
+        if (gestoTelefono == ultimoGestoVisto) return@LaunchedEffect
+        ultimoGestoVisto = gestoTelefono
         reaccion = if (gestoTelefono > 0) "llorando" else "enojado"
         delay(1800)
         reaccion = "normal"
@@ -347,9 +349,11 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int) {
     var errorPortero by remember { mutableFloatStateOf(0f) }
     var celebrandoGol by remember { mutableStateOf(false) }
     var progresoConfeti by remember { mutableFloatStateOf(0f) }
+    var ultimoGestoVisto by remember { mutableIntStateOf(gestoTelefono) }
 
     LaunchedEffect(gestoTelefono) {
-        if (gestoTelefono == 0) return@LaunchedEffect
+        if (gestoTelefono == ultimoGestoVisto) return@LaunchedEffect
+        ultimoGestoVisto = gestoTelefono
         if (gestoTelefono > 0) {
             reaccion = "llorando"
             mensaje = "No me sacudas"
