@@ -466,6 +466,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
     var errorPortero by remember { mutableFloatStateOf(0f) }
     var celebrandoGol by remember { mutableStateOf(false) }
     var progresoConfeti by remember { mutableFloatStateOf(0f) }
+    var balonAtrapado by remember { mutableStateOf(false) }
     var ultimoGestoVisto by remember { mutableIntStateOf(gestoTelefono) }
 
     LaunchedEffect(gestoTelefono) {
@@ -504,6 +505,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             velocidadX = 0f
             velocidadY = 0f
             enVuelo = false
+            balonAtrapado = false
             reaccion = "normal"
             mensaje = nuevoMensaje
         }
@@ -519,6 +521,7 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
             velocidadX = 0f
             velocidadY = 0f
             enVuelo = false
+            balonAtrapado = false
             reaccion = "normal"
             mensaje = "GOOOOL!"
             progresoConfeti = 0f
@@ -538,6 +541,12 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                 progresoConfeti = 0f
                 reiniciar()
             }
+        }
+
+        LaunchedEffect(balonAtrapado) {
+            if (!balonAtrapado) return@LaunchedEffect
+            delay(950)
+            if (balonAtrapado) reiniciar()
         }
 
         LaunchedEffect(ancho, alto) {
@@ -571,7 +580,11 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                     val entroEnPorteria = balonX in porteriaIzquierda..porteriaDerecha && balonY <= 50f && velocidadY < 0f
                     if (laAtrapó) {
                         atajadas++
-                        reiniciar("Parada!")
+                        balonAtrapado = true
+                        velocidadX = 0f
+                        velocidadY = 0f
+                        enVuelo = false
+                        mensaje = "Parada!"
                     } else if (entroEnPorteria) {
                         anotarGol()
                     } else if (balonX <= 0f || balonX >= limiteX || balonY < -16f) {
@@ -630,7 +643,10 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
         Image(
             painter = painterResource(R.drawable.balon_peluche),
             contentDescription = "Balon para tirar",
-            modifier = Modifier.size(SHOT_BALL_SIZE.dp).offset(x = balonX.dp, y = balonY.dp)
+            modifier = Modifier.size(SHOT_BALL_SIZE.dp).offset(
+                x = (if (balonAtrapado) porteroX + PORTERO_SIZE * 0.28f else balonX).dp,
+                y = (if (balonAtrapado) 104f else balonY).dp
+            )
                 .pointerInput(density, ancho, alto) {
                     detectDragGestures(
                         onDragStart = {
