@@ -614,13 +614,19 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                     val centroBalonX = balonX + SHOT_BALL_SIZE / 2f
                     val centroPorteroX = porteroX + PORTERO_SIZE / 2f
                     val dentroDelArco = centroBalonX in (porteriaIzquierda + 10f)..(porteriaDerecha - 10f)
-                    val golpeaPosteIzquierdo = balonY in 54f..184f && balonX <= porteriaIzquierda
-                    val golpeaPosteDerecho = balonY in 54f..184f && balonX >= porteriaDerecha - SHOT_BALL_SIZE
+                    // Los postes tienen volumen: la pelota rebota al rozar las esquinas,
+                    // no hasta que ya atravesó visualmente la porteria.
+                    val posteIzquierdo = porteriaIzquierda + 5f
+                    val posteDerecho = porteriaDerecha - 5f
+                    val golpeaPosteIzquierdo = balonY in 50f..190f &&
+                        centroBalonX in (posteIzquierdo - 18f)..(posteIzquierdo + 28f)
+                    val golpeaPosteDerecho = balonY in 50f..190f &&
+                        centroBalonX in (posteDerecho - 28f)..(posteDerecho + 18f)
                     val golpeaTravesano = dentroDelArco && balonY <= 54f && velocidadY < 0f
                     val laAtrapó = balonY in 68f..175f && abs(centroBalonX - centroPorteroX) < 48f
                     val entroEnPorteria = dentroDelArco && balonY <= 92f && velocidadY < 0f
                     if (golpeaPosteIzquierdo || golpeaPosteDerecho) {
-                        balonX = if (golpeaPosteIzquierdo) porteriaIzquierda else porteriaDerecha - SHOT_BALL_SIZE
+                        balonX = if (golpeaPosteIzquierdo) posteIzquierdo else posteDerecho - SHOT_BALL_SIZE
                         velocidadX = -velocidadX * 0.78f
                         mensaje = "Reboto en el poste"
                     } else if (golpeaTravesano) {
@@ -752,9 +758,12 @@ private fun CampoTiros(modifier: Modifier, gestoTelefono: Int, equipo: EquipoMun
                             val impulsoX = balonX - inicioX
                             val impulsoY = balonY - inicioY
                             if (impulsoY < -10f) {
-                                // Sale desde donde lo soltaste y conserva esa direccion.
-                                velocidadX = (impulsoX * 3.8f).coerceIn(-760f, 760f)
-                                velocidadY = (impulsoY * 4.1f).coerceIn(-1_180f, -340f)
+                                // Arrastrar sirve para apuntar y dar fuerza. La pelota inicia
+                                // en el punto de penal, asi que no se puede meter arrastrandola a la red.
+                                balonX = inicioX
+                                balonY = inicioY
+                                velocidadX = (impulsoX * 4.3f).coerceIn(-860f, 860f)
+                                velocidadY = (impulsoY * 5.2f).coerceIn(-1_420f, -360f)
                                 enVuelo = true
                             } else {
                                 reiniciar("Tiro muy corto")
